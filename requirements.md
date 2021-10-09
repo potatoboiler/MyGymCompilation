@@ -1,0 +1,6 @@
+numpy==1.21.2
+Pillow==8.3.2
+torch==1.9.1
+torchaudio==0.9.1
+torchvision==0.10.1
+typing-extensions==3.10.0.2
