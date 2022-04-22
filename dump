@@ -1,0 +1,39 @@
+from compiler_gym.wrappers import CycleOverBenchmarks, ConstrainedCommandline, TimeLimit
+from ray import tune
+from ray.rllib.agents.ppo import PPOTrainer
+import torch
+
+def make_training_env(*args) -> compiler_gym.envs.CompilerEnv:
+  """Make a reinforcement learning environment that cycles over the
+  set of training benchmarks in use.
+  """
+  del args  # Unused env_config argument passed by ray
+  return CycleOverBenchmarks(make_env(), train_benchmarks)
+
+
+if ray.is_initialized():
+  ray.shutdown()
+ray.init(include_dashboard=False, ignore_reinit_error=True)
+
+tune.register_env("compiler_gym", make_training_env)
+
+analysis = tune.run(
+    PPOTrainer,
+    checkpoint_at_end=True,
+    stop={
+        "episodes_total": 1000,
+    },
+    config={
+        "seed": 0xCC,
+        "num_workers": 1,
+        # Specify the environment to use, where "compiler_gym" is the name we 
+        # passed to tune.register_env().
+        "env": "compiler_gym",
+        # Reduce the size of the batch/trajectory lengths to match our short 
+        # training run.
+        "rollout_fragment_length": 5,
+        "train_batch_size": 5,
+        "sgd_minibatch_size": 5,
+        "framework" : 'torch'
+    }
+)
